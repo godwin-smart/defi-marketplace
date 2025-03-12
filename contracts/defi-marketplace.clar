@@ -152,3 +152,41 @@
         (ok token-id)
     )
 )
+
+(define-public (transfer-nft (token-id uint) (recipient principal))
+    (let
+        (
+            (token (unwrap! (get-token-info token-id) err-invalid-token))
+        )
+        (asserts! (validate-recipient recipient) err-invalid-recipient)
+        (asserts! (is-eq tx-sender (get owner token)) err-not-token-owner)
+        (asserts! (not (get is-staked token)) err-already-staked)
+        (map-set tokens
+            { token-id: token-id }
+            (merge token { owner: recipient })
+        )
+        (ok true)
+    )
+)
+
+;; Marketplace Functions
+
+(define-public (list-nft (token-id uint) (price uint))
+    (let
+        (
+            (token (unwrap! (get-token-info token-id) err-invalid-token))
+        )
+        (asserts! (> price u0) err-invalid-price)
+        (asserts! (is-eq tx-sender (get owner token)) err-not-token-owner)
+        (asserts! (not (get is-staked token)) err-already-staked)
+        (map-set token-listings
+            { token-id: token-id }
+            {
+                price: price,
+                seller: tx-sender,
+                active: true
+            }
+        )
+        (ok true)
+    )
+)
